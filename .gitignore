@@ -1,0 +1,17 @@
+.env
+.env.local
+
+node_modules/
+/backend/venv/
+/backend/env/
+/backend/.venv/
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+/frontend/dist/
+/frontend/build/
+
+.DS_Store
+Thumbs.db
