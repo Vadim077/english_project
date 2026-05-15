@@ -2,9 +2,154 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Language Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-container { height: calc(100vh - 300px); }
+        .user-msg { @apply bg-blue-600 text-white self-end rounded-l-xl rounded-tr-xl; }
+        .ai-msg { @apply bg-slate-700 text-white self-start rounded-r-xl rounded-tl-xl; }
+    </style>
 </head>
-<body>
-    <h1>AI Language Trainer</h1>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <div class="max-w-4xl mx-auto p-4 flex flex-col min-h-screen">
+        
+        <!-- Header -->
+        <header class="py-6 border-b border-slate-800 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-400">AI Language Trainer</h1>
+            <div class="flex gap-4">
+                <select id="level" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
+                    <option value="A1">A1 - Beginner</option>
+                    <option value="A2">A2 - Pre-Intermediate</option>
+                    <option value="B1">B1 - Intermediate</option>
+                    <option value="B2">B2 - Upper-Intermediate</option>
+                    <option value="C1">C1 - Advanced</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Scenario Input -->
+        <div id="setup-screen" class="flex-1 flex flex-col justify-center items-center gap-6">
+            <div class="w-full max-w-md text-center">
+                <h2 class="text-xl mb-4">Опишите ситуацию на русском</h2>
+                <textarea id="scenario" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 h-32 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Например: Я хочу купить кофе в Старбаксе в Нью-Йорке и прошу сделать его менее сладким..."></textarea>
+                <button onclick="startChat()" class="bg-blue-600 hover:bg-blue-500 w-full py-3 rounded-xl font-bold transition-all">Начать тренировку</button>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="hidden flex-1 flex flex-col">
+            <div id="chat-box" class="chat-container overflow-y-auto flex flex-col gap-4 py-4 pr-2">
+                <!-- Messages will appear here -->
+            </div>
+
+            <div class="py-6 border-t border-slate-800">
+                <div id="corrections" class="mb-4 p-3 bg-slate-800 border-l-4 border-yellow-500 rounded hidden text-sm italic">
+                    <!-- Corrections will appear here -->
+                </div>
+                
+                <div class="flex gap-2">
+                    <input id="user-input" type="text" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your message...">
+                    <button id="mic-btn" class="bg-slate-700 p-3 rounded-xl hover:bg-slate-600">🎤</button>
+                    <button onclick="sendMessage()" class="bg-blue-600 px-6 py-3 rounded-xl font-bold hover:bg-blue-500">Send</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let chatHistory = [];
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const correctionsBox = document.getElementById('corrections');
+
+        function startChat() {
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('chat-screen').classList.remove('hidden');
+            addMessage('ai', 'Hello! I am ready. Let\'s start our conversation.');
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            userInput.value = '';
+            addMessage('user', text);
+
+            try {
+                const response = await fetch('http://localhost:8000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        history: chatHistory,
+                        level: document.getElementById('level').value,
+                        scenario: document.getElementById('scenario').value
+                    })
+                });
+
+                const data = await response.json();
+                const parsed = JSON.parse(data); // Ответ приходит строкой JSON
+
+                addMessage('ai', parsed.reply);
+                showCorrections(parsed.corrections);
+                
+                // Озвучка
+                speak(parsed.reply);
+
+            } catch (err) {
+                console.error(err);
+                addMessage('ai', 'Error connecting to server. Make sure main.py is running.');
+            }
+        }
+
+        function addMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `p-4 max-w-[80%] ${role === 'user' ? 'user-msg' : 'ai-msg'}`;
+            div.textContent = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            chatHistory.push({ role, content: text });
+        }
+
+        function showCorrections(text) {
+            correctionsBox.textContent = `Разбор ошибок: ${text}`;
+            correctionsBox.classList.remove('hidden');
+        }
+
+        // --- Voice Features ---
+        const micBtn = document.getElementById('mic-btn');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+
+            micBtn.onmousedown = () => {
+                recognition.start();
+                micBtn.classList.add('bg-red-600');
+            };
+            micBtn.onmouseup = () => {
+                recognition.stop();
+                micBtn.classList.remove('bg-red-600');
+            };
+
+            recognition.onresult = (event) => {
+                userInput.value = event.results[0][0].transcript;
+                sendMessage();
+            };
+        }
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
 </body>
 </html>
