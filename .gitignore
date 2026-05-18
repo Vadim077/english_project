@@ -1,17 +1,33 @@
-.env
-.env.local
+# Обратите внимание: Это базовые исключения для Python/Node.js проектов
 
-node_modules/
-/backend/venv/
-/backend/env/
-/backend/.venv/
+# Среды разработки (Environments)
+venv/
+.venv/
+env/
 
+# Кэш Python и скомпилированные файлы
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-/frontend/dist/
-/frontend/build/
+# Секреты и конфигурации среды
+.env
+.env.*
+!.env.example
 
+# IDE и редакторы
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Зависимости Frontend (если бы они были)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Системные файлы macOS/Windows
 .DS_Store
 Thumbs.db
