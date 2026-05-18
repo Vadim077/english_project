@@ -1,0 +1,4 @@
+NVIDIA_API_KEY=your_nvidia_api_key_here
+RIVA_API_KEY=optional_separate_key_for_tts
+FLUX_API_KEY=your_separate_key_for_flux_here
+SECRET_KEY=your_random_long_secret_string_here
