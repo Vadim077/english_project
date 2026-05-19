@@ -43,6 +43,7 @@ pip install -r requirements.txt
 NVIDIA_API_KEY=ваш_ключ
 RIVA_API_KEY=опционально_другой_ключ_для_голоса
 FLUX_API_KEY=опционально_другой_ключ_для_картинок
+
 ```
 Запуск сервера:
 ```bash
@@ -60,3 +61,5 @@ python -m http.server 3000
 
 ---
 **Disclaimer**: Проект создан в образовательных целях. Архитектура намеренно упрощена (In-Memory Storage вместо PostgreSQL) для удобства развертывания на презентациях.
+
+<img width="1372" height="808" alt="Диаграмма взаимодействия drawio" src="https://github.com/user-attachments/assets/78e733a6-24f8-4f3f-8218-cd02d4bf24c4" />
